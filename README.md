@@ -5,11 +5,11 @@ A React + TypeScript app for keeping track of horses and their owners.
 ## Getting started
 
 ```bash
-npm install
-npm run dev     # start the dev server
-npm test        # run tests
-npm run typecheck  # check types
-npm run build   # production build
+pnpm install
+pnpm dev        # start the dev server
+pnpm test       # run tests
+pnpm typecheck  # check types
+pnpm build      # production build
 ```
 
 ## `HorseOwnerRegistry` component
