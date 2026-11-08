@@ -1,38 +1,54 @@
-import { useState } from 'react';
-import useLocalStorage from '../hooks/useLocalStorage.js';
+import { useState, type ChangeEvent, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage.ts';
+import type { Horse, Owner } from '../types/registry.ts';
 import './HorseOwnerRegistry.css';
 
-const EMPTY_OWNER = { name: '', phone: '', email: '' };
-const EMPTY_HORSE = { name: '', breed: '', age: '', color: '', ownerId: '' };
+/** Form fields are kept as strings while the user types. */
+type OwnerForm = Omit<Owner, 'id'>;
+type HorseForm = { name: string; breed: string; age: string; color: string; ownerId: string };
 
-const newId = () =>
-  typeof crypto !== 'undefined' && crypto.randomUUID
+/** 'all', 'none' (no owner), or an owner id. */
+type OwnerFilter = string;
+
+const EMPTY_OWNER: OwnerForm = { name: '', phone: '', email: '' };
+const EMPTY_HORSE: HorseForm = { name: '', breed: '', age: '', color: '', ownerId: '' };
+
+const newId = (): string =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+export interface HorseOwnerRegistryProps {
+  /** localStorage key prefix. Defaults to "hippology". */
+  storageKey?: string;
+}
 
 /**
  * Stores and manages owners and their horses.
  * Data is saved to localStorage so it survives page reloads.
- *
- * Props:
- *  - storageKey: localStorage key prefix (default "hippology")
  */
-export default function HorseOwnerRegistry({ storageKey = 'hippology' }) {
-  const [owners, setOwners] = useLocalStorage(`${storageKey}:owners`, []);
-  const [horses, setHorses] = useLocalStorage(`${storageKey}:horses`, []);
+export default function HorseOwnerRegistry({ storageKey = 'hippology' }: HorseOwnerRegistryProps) {
+  const [owners, setOwners] = useLocalStorage<Owner[]>(`${storageKey}:owners`, []);
+  const [horses, setHorses] = useLocalStorage<Horse[]>(`${storageKey}:horses`, []);
 
-  const [ownerForm, setOwnerForm] = useState(EMPTY_OWNER);
-  const [editingOwnerId, setEditingOwnerId] = useState(null);
-  const [horseForm, setHorseForm] = useState(EMPTY_HORSE);
-  const [editingHorseId, setEditingHorseId] = useState(null);
-  const [filterOwnerId, setFilterOwnerId] = useState('all');
+  const [ownerForm, setOwnerForm] = useState<OwnerForm>(EMPTY_OWNER);
+  const [editingOwnerId, setEditingOwnerId] = useState<string | null>(null);
+  const [horseForm, setHorseForm] = useState<HorseForm>(EMPTY_HORSE);
+  const [editingHorseId, setEditingHorseId] = useState<string | null>(null);
+  const [filterOwnerId, setFilterOwnerId] = useState<OwnerFilter>('all');
 
-  const ownerName = (id) => owners.find((o) => o.id === id)?.name ?? 'Unassigned';
+  const ownerName = (id: string | null): string =>
+    owners.find((o) => o.id === id)?.name ?? 'Unassigned';
 
   // ---- Owners ----
-  const submitOwner = (e) => {
+  const resetOwnerForm = () => {
+    setOwnerForm(EMPTY_OWNER);
+    setEditingOwnerId(null);
+  };
+
+  const submitOwner = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const owner = { ...ownerForm, name: ownerForm.name.trim() };
+    const owner: OwnerForm = { ...ownerForm, name: ownerForm.name.trim() };
     if (!owner.name) return;
 
     if (editingOwnerId) {
@@ -40,70 +56,76 @@ export default function HorseOwnerRegistry({ storageKey = 'hippology' }) {
     } else {
       setOwners((list) => [...list, { id: newId(), ...owner }]);
     }
-    setOwnerForm(EMPTY_OWNER);
-    setEditingOwnerId(null);
+    resetOwnerForm();
   };
 
-  const editOwner = (owner) => {
+  const editOwner = (owner: Owner) => {
     setEditingOwnerId(owner.id);
     setOwnerForm({ name: owner.name, phone: owner.phone, email: owner.email });
   };
 
-  const deleteOwner = (id) => {
+  const deleteOwner = (id: string) => {
     setOwners((list) => list.filter((o) => o.id !== id));
-    // Keep the horses, but mark them as unassigned.
-    setHorses((list) => list.map((h) => (h.ownerId === id ? { ...h, ownerId: '' } : h)));
+    // Keep the horses, but mark them as having no owner.
+    setHorses((list) => list.map((h) => (h.ownerId === id ? { ...h, ownerId: null } : h)));
     if (filterOwnerId === id) setFilterOwnerId('all');
-    if (editingOwnerId === id) {
-      setEditingOwnerId(null);
-      setOwnerForm(EMPTY_OWNER);
-    }
+    if (editingOwnerId === id) resetOwnerForm();
   };
 
   // ---- Horses ----
-  const submitHorse = (e) => {
+  const resetHorseForm = () => {
+    setHorseForm(EMPTY_HORSE);
+    setEditingHorseId(null);
+  };
+
+  const submitHorse = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const horse = {
-      ...horseForm,
-      name: horseForm.name.trim(),
-      age: horseForm.age === '' ? '' : Number(horseForm.age),
+    const name = horseForm.name.trim();
+    if (!name) return;
+
+    const horse: Omit<Horse, 'id'> = {
+      name,
+      breed: horseForm.breed,
+      age: horseForm.age === '' ? null : Number(horseForm.age),
+      color: horseForm.color,
+      ownerId: horseForm.ownerId || null,
     };
-    if (!horse.name) return;
 
     if (editingHorseId) {
       setHorses((list) => list.map((h) => (h.id === editingHorseId ? { ...h, ...horse } : h)));
     } else {
       setHorses((list) => [...list, { id: newId(), ...horse }]);
     }
-    setHorseForm(EMPTY_HORSE);
-    setEditingHorseId(null);
+    resetHorseForm();
   };
 
-  const editHorse = (horse) => {
+  const editHorse = (horse: Horse) => {
     setEditingHorseId(horse.id);
     setHorseForm({
       name: horse.name,
       breed: horse.breed,
-      age: horse.age === '' ? '' : String(horse.age),
+      age: horse.age === null ? '' : String(horse.age),
       color: horse.color,
-      ownerId: horse.ownerId,
+      ownerId: horse.ownerId ?? '',
     });
   };
 
-  const deleteHorse = (id) => {
+  const deleteHorse = (id: string) => {
     setHorses((list) => list.filter((h) => h.id !== id));
-    if (editingHorseId === id) {
-      setEditingHorseId(null);
-      setHorseForm(EMPTY_HORSE);
-    }
+    if (editingHorseId === id) resetHorseForm();
   };
 
-  const visibleHorses =
+  const visibleHorses: Horse[] =
     filterOwnerId === 'all'
       ? horses
       : horses.filter((h) => (filterOwnerId === 'none' ? !h.ownerId : h.ownerId === filterOwnerId));
 
-  const field = (setter) => (e) => setter((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const field =
+    <F,>(setter: Dispatch<SetStateAction<F>>) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value } = e.target;
+      setter((f) => ({ ...f, [name]: value }));
+    };
 
   return (
     <div className="registry">
@@ -130,13 +152,7 @@ export default function HorseOwnerRegistry({ storageKey = 'hippology' }) {
             <div className="actions">
               <button type="submit">{editingOwnerId ? 'Save owner' : 'Add owner'}</button>
               {editingOwnerId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingOwnerId(null);
-                    setOwnerForm(EMPTY_OWNER);
-                  }}
-                >
+                <button type="button" onClick={resetOwnerForm}>
                   Cancel
                 </button>
               )}
@@ -154,8 +170,8 @@ export default function HorseOwnerRegistry({ storageKey = 'hippology' }) {
                     <div>
                       <strong>{o.name}</strong>
                       <span className="meta">
-                        {[o.phone, o.email].filter(Boolean).join(' · ')}
-                        {' '}({count} {count === 1 ? 'horse' : 'horses'})
+                        {[o.phone, o.email].filter(Boolean).join(' · ')} ({count}{' '}
+                        {count === 1 ? 'horse' : 'horses'})
                       </span>
                     </div>
                     <div className="actions">
@@ -208,13 +224,7 @@ export default function HorseOwnerRegistry({ storageKey = 'hippology' }) {
             <div className="actions">
               <button type="submit">{editingHorseId ? 'Save horse' : 'Add horse'}</button>
               {editingHorseId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingHorseId(null);
-                    setHorseForm(EMPTY_HORSE);
-                  }}
-                >
+                <button type="button" onClick={resetHorseForm}>
                   Cancel
                 </button>
               )}
@@ -243,7 +253,7 @@ export default function HorseOwnerRegistry({ storageKey = 'hippology' }) {
                   <div>
                     <strong>{h.name}</strong>
                     <span className="meta">
-                      {[h.breed, h.color, h.age !== '' ? `${h.age} yrs` : null].filter(Boolean).join(' · ')}
+                      {[h.breed, h.color, h.age !== null ? `${h.age} yrs` : null].filter(Boolean).join(' · ')}
                     </span>
                     <span className="meta">Owner: {ownerName(h.ownerId)}</span>
                   </div>

@@ -1,16 +1,18 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import HorseOwnerRegistry from './HorseOwnerRegistry.jsx';
+import HorseOwnerRegistry from './HorseOwnerRegistry.tsx';
 
 beforeEach(() => localStorage.clear());
 
-async function addOwner(user, name) {
+type User = ReturnType<typeof userEvent.setup>;
+
+async function addOwner(user: User, name: string) {
   const form = screen.getByRole('form', { name: 'Owner form' });
   await user.type(within(form).getByLabelText('Owner name'), name);
   await user.click(within(form).getByRole('button', { name: 'Add owner' }));
 }
 
-async function addHorse(user, name, ownerName) {
+async function addHorse(user: User, name: string, ownerName?: string) {
   const form = screen.getByRole('form', { name: 'Horse form' });
   await user.type(within(form).getByLabelText('Horse name'), name);
   if (ownerName) await user.selectOptions(within(form).getByLabelText('Owner'), ownerName);

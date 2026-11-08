@@ -1,6 +1,6 @@
 # Horse-Hippology-App
 
-A React app for keeping track of horses and their owners.
+A React + TypeScript app for keeping track of horses and their owners.
 
 ## Getting started
 
@@ -8,22 +8,24 @@ A React app for keeping track of horses and their owners.
 npm install
 npm run dev     # start the dev server
 npm test        # run tests
+npm run typecheck  # check types
 npm run build   # production build
 ```
 
 ## `HorseOwnerRegistry` component
 
-`src/components/HorseOwnerRegistry.jsx` lets you:
+`src/components/HorseOwnerRegistry.tsx` lets you:
 
 - Add, edit and delete **owners** (name, phone, email)
 - Add, edit and delete **horses** (name, breed, age, color, owner)
 - Filter horses by owner, or show unassigned horses
+- Types for `Owner` and `Horse` live in `src/types/registry.ts`
 - Keep data across reloads (saved in the browser's `localStorage`)
 
 Deleting an owner keeps their horses and marks them as unassigned.
 
-```jsx
-import HorseOwnerRegistry from './components/HorseOwnerRegistry.jsx';
+```tsx
+import HorseOwnerRegistry from './components/HorseOwnerRegistry.tsx';
 
 <HorseOwnerRegistry storageKey="hippology" />
 ```

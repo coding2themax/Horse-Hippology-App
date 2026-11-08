@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
 // Like useState, but the value is saved to localStorage under `key`.
-export default function useLocalStorage(key, initialValue) {
-  const [value, setValue] = useState(() => {
+export default function useLocalStorage<T>(
+  key: string,
+  initialValue: T
+): [T, Dispatch<SetStateAction<T>>] {
+  const [value, setValue] = useState<T>(() => {
     try {
       const stored = window.localStorage.getItem(key);
-      return stored !== null ? JSON.parse(stored) : initialValue;
+      return stored !== null ? (JSON.parse(stored) as T) : initialValue;
     } catch {
       return initialValue;
     }
