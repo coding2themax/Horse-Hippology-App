@@ -1,0 +1,82 @@
+.registry {
+  font-family: system-ui, sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
+  color: #222;
+}
+
+.registry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.registry form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.registry label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.registry input,
+.registry select {
+  padding: 6px 8px;
+  font-size: 1rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+.registry button {
+  padding: 6px 12px;
+  border: 1px solid #7a4e2d;
+  background: #7a4e2d;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.registry button[type='button'] {
+  background: #fff;
+  color: #7a4e2d;
+}
+
+.registry .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.registry .filter {
+  margin-bottom: 12px;
+}
+
+.registry .list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.registry .list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.registry .meta {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.registry .empty {
+  color: #888;
+  font-style: italic;
+}
